@@ -93,7 +93,49 @@ To better understand how ratings behave at different levels of aggregation, I co
     <tr>
       <td>302120</td>
       <td>4.76</td>
-...
+      <td>216</td>
+      <td>0.72</td>
+    </tr>
+    <tr>
+      <td>486496</td>
+      <td>5.00</td>
+      <td>192</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>293243</td>
+      <td>3.96</td>
+      <td>162</td>
+      <td>1.24</td>
+    </tr>
+    <tr>
+      <td>339453</td>
+      <td>4.58</td>
+      <td>161</td>
+      <td>1.06</td>
+    </tr>
+    <tr>
+      <td>348802</td>
+      <td>4.77</td>
+      <td>146</td>
+      <td>0.68</td>
+    </tr>
+    <tr>
+      <td>294196</td>
+      <td>4.39</td>
+      <td>134</td>
+      <td>1.30</td>
+    </tr>
+    <tr>
+      <td>486641</td>
+      <td>4.80</td>
+      <td>133</td>
+      <td>0.68</td>
+    </tr>
+    <tr>
+      <td>294620</td>
+      <td>4.82</td>
+      <td>125</td>
       <td>0.53</td>
     </tr>
   </tbody>
