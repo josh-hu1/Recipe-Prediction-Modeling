@@ -68,13 +68,36 @@ Users with few ratings show highly variable mean ratings, while users with many 
 
 To better understand how ratings behave at different levels of aggregation, I computed recipe-level statistics. The table below shows recipes with the largest number of ratings (more reliable estimates of typical rating).
 
-(Replace this table with your own `to_markdown()` output if needed.)
-
-| id | average_rating | num_ratings |
-|---:|---------------:|------------:|
-| ... | ... | ... |
-| ... | ... | ... |
-| ... | ... | ... |
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>id</th>
+      <th>average_rating</th>
+      <th>num_ratings</th>
+      <th>rating_std</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>349246</td>
+      <td>4.24</td>
+      <td>295</td>
+      <td>1.25</td>
+    </tr>
+    <tr>
+      <td>486261</td>
+      <td>4.99</td>
+      <td>217</td>
+      <td>0.10</td>
+    </tr>
+    <tr>
+      <td>302120</td>
+      <td>4.76</td>
+...
+      <td>0.53</td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
