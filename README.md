@@ -1,5 +1,3 @@
-# Recipe-Prediction-Modeling
-
 # Food.com Recipe Ratings: User vs Recipe Predictiveness
 
 ## Step 1: Introduction and Question
