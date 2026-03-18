@@ -54,6 +54,77 @@ I merged recipe-level data with interaction-level data using a left join on reci
 
 In `interactions.csv`, a rating value of `0` does not represent a real 1–5 rating, so I replaced `rating == 0` with `NaN` to treat it as missing. I also parsed the `date` column into a datetime format.
 
+### Cleaned DataFrame (first 5 rows)
+
+Below is the first 5 rows of the cleaned dataset, restricted to columns relevant to my analysis (recipe ID/name, basic recipe attributes, user ID, date, and rating).
+
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>id</th>
+      <th>name</th>
+      <th>minutes</th>
+      <th>n_steps</th>
+      <th>n_ingredients</th>
+      <th>user_id</th>
+      <th>date</th>
+      <th>rating</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>333281</td>
+      <td>1 brownies in the world    best ever...</td>
+      <td>40</td>
+      <td>10</td>
+      <td>9</td>
+      <td>3.87e+05</td>
+      <td>2008-11-19</td>
+      <td>4.0</td>
+    </tr>
+    <tr>
+      <td>453467</td>
+      <td>1 in canada chocolate chip cookies...</td>
+      <td>45</td>
+      <td>12</td>
+      <td>11</td>
+      <td>4.25e+05</td>
+      <td>2012-01-26</td>
+      <td>5.0</td>
+    </tr>
+    <tr>
+      <td>306168</td>
+      <td>412 broccoli casserole...</td>
+      <td>40</td>
+      <td>6</td>
+      <td>9</td>
+      <td>2.98e+04</td>
+      <td>2008-12-31</td>
+      <td>5.0</td>
+    </tr>
+    <tr>
+      <td>306168</td>
+      <td>412 broccoli casserole...</td>
+      <td>40</td>
+      <td>6</td>
+      <td>9</td>
+      <td>1.20e+06</td>
+      <td>2009-04-13</td>
+      <td>5.0</td>
+    </tr>
+    <tr>
+      <td>306168</td>
+      <td>412 broccoli casserole...</td>
+      <td>40</td>
+      <td>6</td>
+      <td>9</td>
+      <td>7.69e+05</td>
+      <td>2013-08-02</td>
+      <td>5.0</td>
+    </tr>
+  </tbody>
+</table>
+
 ###  Univariate Analysis
 
 #### Distribution of Ratings (1–5)
@@ -221,6 +292,8 @@ T = MAE_user − MAE_recipe (computed on the same held-out test set)
 
 **Result:** T_obs = −0.0164 and p ≈ 0.0 (p < 1/B), so I reject H0 at alpha = 0.05. This provides strong evidence that user identity is more predictive of ratings than recipe identity under these identity-only baseline predictors.
 
+I used a paired permutation test because both predictors (user-only and recipe-only) are evaluated on the same test interactions, so swapping per-row errors matches the null hypothesis of equal predictive power. MAE is a good metric here because it is directly interpretable in “rating points.” I used a significance level of alpha = 0.05 as a conventional threshold for deciding whether the observed difference is unlikely under the null.
+
 ---
 
 ## Framing a Prediction Problem
@@ -257,8 +330,11 @@ In addition to the baseline features, I added engineered recipe features:
 - `steps_per_minute = n_steps/(minutes+1)` and `minutes_per_step = minutes/(n_steps+1)` to capture process intensity/complexity
 
 I used GridSearchCV (5-fold CV) to select the best `alpha` based on MAE.
+GridSearchCV selected  `alpha` = 0.1 as the best value.
 
 **Final performance:** test MAE = 0.4415, improving over the baseline MAE of 0.4447 on the same test set.
+
+
 
 ---
 
