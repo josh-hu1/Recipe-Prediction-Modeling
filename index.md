@@ -1,5 +1,3 @@
-# Recipe-Prediction-Modeling
-
 # Food.com Recipe Ratings: User vs Recipe Predictiveness
 
 ## Step 1: Introduction and Question
@@ -68,78 +66,13 @@ Users with few ratings show highly variable mean ratings, while users with many 
 
 To better understand how ratings behave at different levels of aggregation, I computed recipe-level statistics. The table below shows recipes with the largest number of ratings (more reliable estimates of typical rating).
 
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th>id</th>
-      <th>average_rating</th>
-      <th>num_ratings</th>
-      <th>rating_std</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>349246</td>
-      <td>4.24</td>
-      <td>295</td>
-      <td>1.25</td>
-    </tr>
-    <tr>
-      <td>486261</td>
-      <td>4.99</td>
-      <td>217</td>
-      <td>0.10</td>
-    </tr>
-    <tr>
-      <td>302120</td>
-      <td>4.76</td>
-      <td>216</td>
-      <td>0.72</td>
-    </tr>
-    <tr>
-      <td>486496</td>
-      <td>5.00</td>
-      <td>192</td>
-      <td>0.00</td>
-    </tr>
-    <tr>
-      <td>293243</td>
-      <td>3.96</td>
-      <td>162</td>
-      <td>1.24</td>
-    </tr>
-    <tr>
-      <td>339453</td>
-      <td>4.58</td>
-      <td>161</td>
-      <td>1.06</td>
-    </tr>
-    <tr>
-      <td>348802</td>
-      <td>4.77</td>
-      <td>146</td>
-      <td>0.68</td>
-    </tr>
-    <tr>
-      <td>294196</td>
-      <td>4.39</td>
-      <td>134</td>
-      <td>1.30</td>
-    </tr>
-    <tr>
-      <td>486641</td>
-      <td>4.80</td>
-      <td>133</td>
-      <td>0.68</td>
-    </tr>
-    <tr>
-      <td>294620</td>
-      <td>4.82</td>
-      <td>125</td>
-      <td>0.53</td>
-    </tr>
-  </tbody>
-</table>
+(Replace this table with your own `to_markdown()` output if needed.)
+
+| id | average_rating | num_ratings |
+|---:|---------------:|------------:|
+| ... | ... | ... |
+| ... | ... | ... |
+| ... | ... | ... |
 
 ---
 
