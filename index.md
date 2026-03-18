@@ -1,27 +1,62 @@
 # Food.com Recipe Ratings: User vs Recipe Predictiveness
 
-## Step 1: Introduction and Question
+Author: Josh Hu
+
+
+
+## Overview
+
+This data science project, conducted at UCSD, focuses on comparing two relationships - whether a recipe's rating is better predicted by the recipe's "merit", or better predicted simply by the user giving the rating. 
+
+## Introduction
 
 This project uses two files from the Food.com dataset: `RAW_recipes.csv` (recipe attributes like cook time and number of steps) and `interactions.csv` (user–recipe interactions including ratings and dates). After merging, each row represents a specific user interacting with a specific recipe.
 
-**Project question:** Are recipe ratings more predictably determined by **who** is rating (user identity) or by **what** is being rated (recipe identity/qualities)?
+**Project question: Are recipe ratings more predictably determined by **who** is rating (user identity) or by **what** is being rated (recipe identity/qualities)?** 
 
-This question matters because if user identity dominates, ratings are driven largely by individual rating behavior (generous vs. strict raters). If recipe identity dominates, ratings reflect stable recipe “quality” more than the rater.
+This question matters because if user identity dominates, ratings are driven largely by individual rating behavior (generous vs. strict raters). If recipe identity dominates, ratings reflect stable recipe “quality” more than the rater. 
+
+The first dataset, `recipe`, contains 83782 rows, with each row corresponding to a corresponding recipe. Each row contains 10 columns recording the following information:
+
+| Column             | Description                                                                                                                                                                                       |
+| :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `'name'`           | Recipe name                                                                                                                                                                                       |
+| `'id'`             | Recipe ID                                                                                                                                                                                         |
+| `'minutes'`        | Minutes to prepare recipe                                                                                                                                                                         |
+| `'contributor_id'` | User ID who submitted this recipe                                                                                                                                                                 |
+| `'submitted'`      | Date recipe was submitted                                                                                                                                                                         |
+| `'tags'`           | Food.com tags for recipe                                                                                                                                                                          |
+| `'nutrition'`      | Nutrition information in the form [calories (#), total fat (PDV), sugar (PDV), sodium (PDV), protein (PDV), saturated fat (PDV), carbohydrates (PDV)]; PDV stands for “percentage of daily value” |
+| `'n_steps'`        | Number of steps in recipe                                                                                                                                                                         |
+| `'steps'`          | Text for recipe steps, in order                                                                                                                                                                   |
+| `'description'`    | User-provided description                                                                                                                                                                         |
+| `'ingredients'`    | Text containing all recipe ingredients                                                                                                                                                                       |
+| `'n_ingredients'`  | Number of ingredients in recipe                                                                                                                                                                   |
+
+The second dataset, `interactions`, contains 731927 rows, with each row corresponding to a review from the user on a specific recipe. The columns it includes are:
+
+| Column        | Description         |
+| :------------ | :------------------ |
+| `'user_id'`   | User ID             |
+| `'recipe_id'` | Recipe ID           |
+| `'date'`      | Date of interaction |
+| `'rating'`    | Rating given        |
+| `'review'`    | Review text         |
+
 
 ---
 
-## Step 2: Data Cleaning and Exploratory Data Analysis
+## Data Cleaning and Exploratory Data Analysis
 
-### Step 2.1 Data Cleaning
+### Data Cleaning
 
 I merged recipe-level data with interaction-level data using a left join on recipe ID (`id` in `RAW_recipes.csv` and `recipe_id` in `interactions.csv`). This creates one row per (user, recipe) interaction and repeats recipe attributes across multiple ratings.
 
 In `interactions.csv`, a rating value of `0` does not represent a real 1–5 rating, so I replaced `rating == 0` with `NaN` to treat it as missing. I also parsed the `date` column into a datetime format.
 
-### Step 2.2 Univariate Analysis
+###  Univariate Analysis
 
 #### Distribution of Ratings (1–5)
-Ratings are heavily concentrated near 5, indicating strong positive skew and suggesting that users tend to leave ratings when they like a recipe.
 
 <iframe
   src="assets/rating_dist.html"
@@ -30,8 +65,9 @@ Ratings are heavily concentrated near 5, indicating strong positive skew and sug
   frameborder="0"
 ></iframe>
 
+Ratings are heavily concentrated near 5, indicating strong positive skew and suggesting that users tend to leave ratings when they like a recipe.
+
 #### Distribution of Cook Time (minutes)
-Cook times are extremely right-skewed with a long tail of very large values, so a log count scale helps reveal the distribution of typical recipes.
 
 <iframe
   src="assets/minutes_dist.html"
@@ -40,10 +76,12 @@ Cook times are extremely right-skewed with a long tail of very large values, so 
   frameborder="0"
 ></iframe>
 
-### Step 2.3 Bivariate Analysis
+After removing outliers in the `minutes` category, a histogram shows that cook times are relatively evenly distributed, with a slight right skew.
+
+### Bivariate Analysis
 
 #### Cook Time vs Rating
-This plot compares cook time across different rating values. Using a log scale helps reveal whether typical cook times differ meaningfully between lower- and higher-rated recipes despite extreme outliers.
+This plot compares cook time across different rating values. 
 
 <iframe
   src="assets/minutes_vs_rating.html"
@@ -52,8 +90,10 @@ This plot compares cook time across different rating values. Using a log scale h
   frameborder="0"
 ></iframe>
 
+Using a log scale helps reveal whether typical cook times differ meaningfully between lower- and higher-rated recipes despite extreme outliers. However, even with this scaling, there is no clear relationship between the time a recipe takes to make and its rating.
+
 #### User vs Rating (User Mean Rating vs Number of Ratings)
-Users with few ratings show highly variable mean ratings, while users with many ratings have mean ratings that cluster near the high end, suggesting stable user-specific rating tendencies and overall positivity bias.
+
 
 <iframe
   src="assets/user_mean_vs_count.html"
@@ -62,17 +102,68 @@ Users with few ratings show highly variable mean ratings, while users with many 
   frameborder="0"
 ></iframe>
 
+Users with few ratings show highly variable mean ratings, while users with many ratings have mean ratings that cluster near the high end, suggesting stable user-specific rating tendencies and overall positivity bias.
+
 ### Step 2.4 Interesting Aggregates
 
 To better understand how ratings behave at different levels of aggregation, I computed recipe-level statistics. The table below shows recipes with the largest number of ratings (more reliable estimates of typical rating).
 
-(Replace this table with your own `to_markdown()` output if needed.)
-
-| id | average_rating | num_ratings |
-|---:|---------------:|------------:|
-| ... | ... | ... |
-| ... | ... | ... |
-| ... | ... | ... |
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>id</th>
+      <th>average_rating</th>
+      <th>num_ratings</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>349246</td>
+      <td>4.24</td>
+      <td>295</td>
+    </tr>
+    <tr>
+      <td>486261</td>
+      <td>4.99</td>
+      <td>217</td>
+    </tr>
+    <tr>
+      <td>302120</td>
+      <td>4.76</td>
+      <td>216</td>
+    </tr>
+    <tr>
+      <td>486496</td>
+      <td>5.00</td>
+      <td>192</td>
+    </tr>
+    <tr>
+      <td>293243</td>
+      <td>3.96</td>
+      <td>162</td>
+    </tr>
+    <tr>
+      <td>339453</td>
+      <td>4.58</td>
+      <td>161</td>
+    </tr>
+    <tr>
+      <td>348802</td>
+      <td>4.77</td>
+      <td>146</td>
+    </tr>
+    <tr>
+      <td>294196</td>
+      <td>4.39</td>
+      <td>134</td>
+    </tr>
+    <tr>
+      <td>486641</td>
+      <td>4.80</td>
+      <td>133</td>
+    </tr>
+    <tr>
+      <td>294620</td>
 
 ---
 
