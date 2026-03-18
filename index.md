@@ -12,11 +12,11 @@ This data science project, conducted at UCSD, focuses on comparing two relations
 
 This project uses two files from the Food.com dataset: `RAW_recipes.csv` (recipe attributes like cook time and number of steps) and `interactions.csv` (user–recipe interactions including ratings and dates). After merging, each row represents a specific user interacting with a specific recipe.
 
-**Project question: Are recipe ratings more predictably determined by **who** is rating (user identity) or by **what** is being rated (recipe identity/qualities)?** 
+**Project question:** Are recipe ratings more predictably determined by **who** is rating (user identity) or by **what** is being rated (recipe identity/qualities)?
 
 This question matters because if user identity dominates, ratings are driven largely by individual rating behavior (generous vs. strict raters). If recipe identity dominates, ratings reflect stable recipe “quality” more than the rater. 
 
-The first dataset, `recipe`, contains 83782 rows, with each row corresponding to a corresponding recipe. Each row contains 10 columns recording the following information:
+The first dataset,`recipe`, contains 83782 rows, with each row corresponding to a corresponding recipe. Each row contains 10 columns recording the following information:
 
 | Column             | Description                                                                                                                                                                                       |
 | :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -33,7 +33,7 @@ The first dataset, `recipe`, contains 83782 rows, with each row corresponding to
 | `'ingredients'`    | Text containing all recipe ingredients                                                                                                                                                                       |
 | `'n_ingredients'`  | Number of ingredients in recipe                                                                                                                                                                   |
 
-The second dataset, `interactions`, contains 731927 rows, with each row corresponding to a review from the user on a specific recipe. The columns it includes are:
+The second dataset,`interactions`, contains 731927 rows, with each row corresponding to a review from the user on a specific recipe. The columns it includes are:
 
 | Column        | Description         |
 | :------------ | :------------------ |

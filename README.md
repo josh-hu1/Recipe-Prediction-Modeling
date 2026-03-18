@@ -104,7 +104,7 @@ Using a log scale helps reveal whether typical cook times differ meaningfully be
 
 Users with few ratings show highly variable mean ratings, while users with many ratings have mean ratings that cluster near the high end, suggesting stable user-specific rating tendencies and overall positivity bias.
 
-### Step 2.4 Interesting Aggregates
+### Interesting Aggregates
 
 To better understand how ratings behave at different levels of aggregation, I computed recipe-level statistics. The table below shows recipes with the largest number of ratings (more reliable estimates of typical rating).
 
@@ -164,18 +164,25 @@ To better understand how ratings behave at different levels of aggregation, I co
     </tr>
     <tr>
       <td>294620</td>
+      <td>4.82</td>
+      <td>125</td>
+    </tr>
+  </tbody>
+</table>
+
 
 ---
+This table lists the recipes with the most ratings, so their average ratings are more stable than recipes with only a few ratings. The averages remain very high (mostly above 4.0), indicating strong positivity bias in user ratings, but there is still meaningful variation—some widely rated recipes cluster near 4.0 while others approach 5.0—suggesting recipe-level differences persist even with many reviews.
 
-## Step 3: Assessment of Missingness
+## Assessment of Missingness
 
-### Step 3.1 MNAR Analysis
+### MNAR Analysis
 
 I believe the `rating` column is plausibly **MNAR** (Missing Not At Random). Users may be more likely to leave a rating when they had a particularly positive (or negative) experience, so the probability that a rating is missing can depend on the unobserved rating value itself.
 
 Additional behavioral data (e.g., whether the user cooked the recipe, how long they viewed the page, whether they bookmarked it, or whether they left a written review) could help explain why ratings are missing and potentially make the missingness closer to MAR.
 
-### Step 3.2 Missingness Dependency (Permutation Tests)
+### Missingness Dependency (Permutation Tests)
 
 I created an indicator `rating_missing` equal to True when `rating` is missing. I used a permutation test with the following test statistic:
 
@@ -197,7 +204,7 @@ The plot below shows the distribution of `n_steps` split by whether `rating` is 
 
 ---
 
-## Step 4: Hypothesis Testing (Not Missingness)
+## Hypothesis Testing 
 
 ### Is user identity more predictive than recipe identity?
 
@@ -216,7 +223,7 @@ T = MAE_user − MAE_recipe (computed on the same held-out test set)
 
 ---
 
-## Step 5: Framing a Prediction Problem
+## Framing a Prediction Problem
 
 **Prediction task:** Predict the numeric `rating` (1–5) that a user will give to a recipe.  
 **Type:** Regression  
@@ -226,7 +233,7 @@ T = MAE_user − MAE_recipe (computed on the same held-out test set)
 
 ---
 
-## Step 6: Baseline Model
+## Baseline Model
 
 **Model:** Ridge regression in an sklearn Pipeline.
 
@@ -239,7 +246,7 @@ T = MAE_user − MAE_recipe (computed on the same held-out test set)
 
 ---
 
-## Step 7: Final Model
+## Final Model
 
 ### Planned hyperparameter tuning
 I tuned Ridge’s regularization strength `alpha`. Because `user_id` is one-hot encoded, the model has a high-dimensional feature space and can overfit; regularization controls how much coefficients are shrunk and can improve generalization.
@@ -255,7 +262,7 @@ I used GridSearchCV (5-fold CV) to select the best `alpha` based on MAE.
 
 ---
 
-## Step 8: Fairness Analysis
+## Fairness Analysis
 
 I tested whether the final model performs worse for users with little historical rating data (a cold-start concern).
 
