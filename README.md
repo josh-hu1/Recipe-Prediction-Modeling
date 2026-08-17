@@ -1,358 +1,225 @@
-# Food.com Recipe Ratings: User vs Recipe Predictiveness
+# Food.com Recipe Rating Prediction
 
-Author: Josh Hu
+A data science project analyzing **731,927 Food.com user-recipe interactions** to investigate whether ratings are driven more by the recipe itself or by the individual user giving the rating.
 
+## Key Findings
 
+- **User identity was significantly more predictive of ratings than recipe identity**, suggesting that users have persistent rating tendencies.
+- A tuned **Ridge regression model** achieved a test MAE of **0.4415**.
+- The model exhibited a substantial **cold-start problem**:
+  - Cold-start users: **0.6348 MAE**
+  - Active users: **0.3206 MAE**
+- Prediction error for users with little historical data was therefore nearly **twice as high** as for highly active users.
 
-## Overview
+## Research Question
 
-This data science project, conducted at UCSD, focuses on comparing two relationships - whether a recipe's rating is better predicted by the recipe's "merit", or better predicted simply by the user giving the rating. 
+**Are recipe ratings more predictably determined by who is rating or by what is being rated?**
 
-## Introduction
+The analysis compares user-based and recipe-based predictive performance to determine whether observed ratings are influenced more strongly by persistent user behavior or by differences between individual recipes.
 
-This project uses two files from the Food.com dataset: `RAW_recipes.csv` (recipe attributes like cook time and number of steps) and `interactions.csv` (user–recipe interactions including ratings and dates). After merging, each row represents a specific user interacting with a specific recipe.
+The results provide strong evidence that **user identity carries more predictive information than recipe identity**.
 
-**Project question:** Are recipe ratings more predictably determined by **who** is rating (user identity) or by **what** is being rated (recipe identity/qualities)? 
+## Dataset
 
-This question matters because if user identity dominates, ratings are driven largely by individual rating behavior (generous vs. strict raters). If recipe identity dominates, ratings reflect stable recipe “quality” more than the rater. 
+The project uses two Food.com datasets:
 
-The first dataset, `recipe`, contains 83782 rows, with each row corresponding to a corresponding recipe. Each row contains 10 columns recording the following information:
+- `RAW_recipes.csv` — recipe-level information including preparation time, ingredients, number of steps, and descriptions
+- `interactions.csv` — user-recipe interactions including ratings, review dates, and user IDs
 
-| Column             | Description                                                                                                                                                                                       |
-| :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `'name'`           | Recipe name                                                                                                                                                                                       |
-| `'id'`             | Recipe ID                                                                                                                                                                                         |
-| `'minutes'`        | Minutes to prepare recipe                                                                                                                                                                         |
-| `'contributor_id'` | User ID who submitted this recipe                                                                                                                                                                 |
-| `'submitted'`      | Date recipe was submitted                                                                                                                                                                         |
-| `'tags'`           | Food.com tags for recipe                                                                                                                                                                          |
-| `'nutrition'`      | Nutrition information in the form [calories (#), total fat (PDV), sugar (PDV), sodium (PDV), protein (PDV), saturated fat (PDV), carbohydrates (PDV)]; PDV stands for “percentage of daily value” |
-| `'n_steps'`        | Number of steps in recipe                                                                                                                                                                         |
-| `'steps'`          | Text for recipe steps, in order                                                                                                                                                                   |
-| `'description'`    | User-provided description                                                                                                                                                                         |
-| `'ingredients'`    | Text containing all recipe ingredients                                                                                                                                                                       |
-| `'n_ingredients'`  | Number of ingredients in recipe                                                                                                                                                                   |
+The datasets contain:
 
-The second dataset, `interactions`, contains 731927 rows, with each row corresponding to a review from the user on a specific recipe. The columns it includes are:
+- **83,782 recipes**
+- **731,927 user-recipe interactions**
 
-| Column        | Description         |
-| :------------ | :------------------ |
-| `'user_id'`   | User ID             |
-| `'recipe_id'` | Recipe ID           |
-| `'date'`      | Date of interaction |
-| `'rating'`    | Rating given        |
-| `'review'`    | Review text         |
+After merging on recipe ID, each row represents a user's interaction with a specific recipe.
 
+## Methods
 
----
+The project includes:
 
-## Data Cleaning and Exploratory Data Analysis
+- Data cleaning and preprocessing
+- Exploratory data analysis
+- Missing-data analysis
+- Permutation testing
+- User-vs.-recipe predictive comparison
+- Feature engineering
+- Ridge regression
+- One-hot encoding
+- 5-fold cross-validation
+- GridSearchCV
+- Cold-start performance analysis
 
-### Data Cleaning
+## Model Development
 
-I merged recipe-level data with interaction-level data using a left join on recipe ID (`id` in `RAW_recipes.csv` and `recipe_id` in `interactions.csv`). This creates one row per (user, recipe) interaction and repeats recipe attributes across multiple ratings.
+### Baseline Model
 
-In `interactions.csv`, a rating value of `0` does not represent a real 1–5 rating, so I replaced `rating == 0` with `NaN` to treat it as missing. I also parsed the `date` column into a datetime format.
+The baseline model uses Ridge regression with:
 
-### Cleaned DataFrame (first 5 rows)
+- `user_id`, one-hot encoded
+- `minutes`
+- `n_steps`
 
-Below is the first 5 rows of the cleaned dataset, restricted to columns relevant to my analysis (recipe ID/name, basic recipe attributes, user ID, date, and rating).
+The baseline model achieved:
 
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th>id</th>
-      <th>name</th>
-      <th>minutes</th>
-      <th>n_steps</th>
-      <th>n_ingredients</th>
-      <th>user_id</th>
-      <th>date</th>
-      <th>rating</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>333281</td>
-      <td>1 brownies in the world    best ever...</td>
-      <td>40</td>
-      <td>10</td>
-      <td>9</td>
-      <td>3.87e+05</td>
-      <td>2008-11-19</td>
-      <td>4.0</td>
-    </tr>
-    <tr>
-      <td>453467</td>
-      <td>1 in canada chocolate chip cookies...</td>
-      <td>45</td>
-      <td>12</td>
-      <td>11</td>
-      <td>4.25e+05</td>
-      <td>2012-01-26</td>
-      <td>5.0</td>
-    </tr>
-    <tr>
-      <td>306168</td>
-      <td>412 broccoli casserole...</td>
-      <td>40</td>
-      <td>6</td>
-      <td>9</td>
-      <td>2.98e+04</td>
-      <td>2008-12-31</td>
-      <td>5.0</td>
-    </tr>
-    <tr>
-      <td>306168</td>
-      <td>412 broccoli casserole...</td>
-      <td>40</td>
-      <td>6</td>
-      <td>9</td>
-      <td>1.20e+06</td>
-      <td>2009-04-13</td>
-      <td>5.0</td>
-    </tr>
-    <tr>
-      <td>306168</td>
-      <td>412 broccoli casserole...</td>
-      <td>40</td>
-      <td>6</td>
-      <td>9</td>
-      <td>7.69e+05</td>
-      <td>2013-08-02</td>
-      <td>5.0</td>
-    </tr>
-  </tbody>
-</table>
+**MAE = 0.4447**
 
-###  Univariate Analysis
+### Feature Engineering
 
-#### Distribution of Ratings (1–5)
+The final model adds:
 
-<iframe
-  src="assets/rating_dist.html"
-  width="800"
-  height="600"
-  frameborder="0"
-></iframe>
+- `log_minutes`
+- `steps_per_minute`
+- `minutes_per_step`
 
-Ratings are heavily concentrated near 5, indicating strong positive skew and suggesting that users tend to leave ratings when they like a recipe.
+These features were designed to capture recipe preparation complexity while reducing the influence of extreme cook-time values.
 
-#### Distribution of Cook Time (minutes)
+The model was tuned using **5-fold cross-validation** and `GridSearchCV`.
 
-<iframe
-  src="assets/minutes_dist.html"
-  width="800"
-  height="600"
-  frameborder="0"
-></iframe>
+Best regularization parameter:
 
-After removing outliers in the `minutes` category, a histogram shows that cook times are relatively evenly distributed, with a slight right skew.
+```text
+alpha = 0.1
+````
 
-### Bivariate Analysis
+Final model performance:
 
-#### Cook Time vs Rating
-This plot compares cook time across different rating values. 
+**MAE = 0.4415**
 
-<iframe
-  src="assets/minutes_vs_rating.html"
-  width="800"
-  height="600"
-  frameborder="0"
-></iframe>
+The improvement over the baseline is modest, suggesting that recipe-level features provide some additional predictive signal while user-specific information remains a major source of predictive power.
 
-Using a log scale helps reveal whether typical cook times differ meaningfully between lower- and higher-rated recipes despite extreme outliers. However, even with this scaling, there is no clear relationship between the time a recipe takes to make and its rating.
+## User vs. Recipe Predictive Analysis
 
-#### User vs Rating (User Mean Rating vs Number of Ratings)
+Two simple predictors were compared:
 
+* **User-only predictor:** predicts ratings using the user's average training-set rating
+* **Recipe-only predictor:** predicts ratings using the recipe's average training-set rating
 
-<iframe
-  src="assets/user_mean_vs_count.html"
-  width="800"
-  height="600"
-  frameborder="0"
-></iframe>
+Both were evaluated on the same held-out test set using Mean Absolute Error.
 
-Users with few ratings show highly variable mean ratings, while users with many ratings have mean ratings that cluster near the high end, suggesting stable user-specific rating tendencies and overall positivity bias.
+The observed difference was:
 
-### Interesting Aggregates
+```text
+MAE_user - MAE_recipe = -0.0164
+```
 
-To better understand how ratings behave at different levels of aggregation, I computed recipe-level statistics. The table below shows recipes with the largest number of ratings (more reliable estimates of typical rating).
+A paired permutation test produced:
 
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th>id</th>
-      <th>average_rating</th>
-      <th>num_ratings</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>349246</td>
-      <td>4.24</td>
-      <td>295</td>
-    </tr>
-    <tr>
-      <td>486261</td>
-      <td>4.99</td>
-      <td>217</td>
-    </tr>
-    <tr>
-      <td>302120</td>
-      <td>4.76</td>
-      <td>216</td>
-    </tr>
-    <tr>
-      <td>486496</td>
-      <td>5.00</td>
-      <td>192</td>
-    </tr>
-    <tr>
-      <td>293243</td>
-      <td>3.96</td>
-      <td>162</td>
-    </tr>
-    <tr>
-      <td>339453</td>
-      <td>4.58</td>
-      <td>161</td>
-    </tr>
-    <tr>
-      <td>348802</td>
-      <td>4.77</td>
-      <td>146</td>
-    </tr>
-    <tr>
-      <td>294196</td>
-      <td>4.39</td>
-      <td>134</td>
-    </tr>
-    <tr>
-      <td>486641</td>
-      <td>4.80</td>
-      <td>133</td>
-    </tr>
-    <tr>
-      <td>294620</td>
-      <td>4.82</td>
-      <td>125</td>
-    </tr>
-  </tbody>
-</table>
+```text
+p-value < 0.0002
+```
 
+This provides strong evidence that the user-only predictor performs better than the recipe-only predictor.
 
----
-This table lists the recipes with the most ratings, so their average ratings are more stable than recipes with only a few ratings. The averages remain very high (mostly above 4.0), indicating strong positivity bias in user ratings, but there is still meaningful variation—some widely rated recipes cluster near 4.0 while others approach 5.0—suggesting recipe-level differences persist even with many reviews.
+## Cold-Start Analysis
 
-## Assessment of Missingness
+Because user identity was highly predictive, I tested whether model performance changes based on the amount of historical information available for each user.
 
-### MNAR Analysis
+Users were divided into:
 
-I believe the `rating` column is plausibly **MNAR** (Missing Not At Random). Users may be more likely to leave a rating when they had a particularly positive (or negative) experience, so the probability that a rating is missing can depend on the unobserved rating value itself.
-
-Additional behavioral data (e.g., whether the user cooked the recipe, how long they viewed the page, whether they bookmarked it, or whether they left a written review) could help explain why ratings are missing and potentially make the missingness closer to MAR.
-
-### Missingness Dependency (Permutation Tests)
-
-I created an indicator `rating_missing` equal to True when `rating` is missing. I used a permutation test with the following test statistic:
-
-**Test statistic:** absolute difference in means  
-T = | mean(X when rating_missing is True) − mean(X when rating_missing is False) |
+* **Cold-start users:** 5 or fewer historical ratings
+* **Active users:** 50 or more historical ratings
 
 Results:
-- Missingness of `rating` **depends on** `n_steps` (p-value ≈ 0.0, i.e., < 1/B).
-- Missingness of `rating` **does not depend on** `minutes` (p-value = 0.13).
 
-The plot below shows the distribution of `n_steps` split by whether `rating` is missing.
+| User Group       |    MAE |
+| :--------------- | -----: |
+| Cold-start users | 0.6348 |
+| Active users     | 0.3206 |
 
-<iframe
-  src="assets/missingness_nsteps.html"
-  width="800"
-  height="600"
-  frameborder="0"
-></iframe>
+The difference in prediction error was:
 
----
+```text
+0.6348 - 0.3206 = 0.3143
+```
 
-## Hypothesis Testing 
+A permutation test produced:
 
-### Is user identity more predictive than recipe identity?
+```text
+p-value < 0.0002
+```
 
-I compared two identity-only baseline predictors for rating:
-- **User-only predictor:** predict a rating using the user’s mean training-set rating.
-- **Recipe-only predictor:** predict a rating using the recipe’s mean training-set rating.
-- For unseen users/recipes in the test set, I used the global mean rating from the training set.
+The model's error for cold-start users is therefore nearly **twice as high** as its error for active users.
 
-**Null hypothesis (H0):** User identity is not more predictive than recipe identity (MAE_user − MAE_recipe = 0).  
-**Alternative hypothesis (H1):** User identity is more predictive than recipe identity (MAE_user − MAE_recipe < 0).
+This is consistent with the earlier finding that user identity is highly predictive: when a user has substantial historical data, the model can better learn their typical rating behavior.
 
-**Test statistic:**  
-T = MAE_user − MAE_recipe (computed on the same held-out test set)
+## Technologies
 
-**Result:** T_obs = −0.0164 and p ≈ 0.0 (p < 1/B), so I reject H0 at alpha = 0.05. This provides strong evidence that user identity is more predictive of ratings than recipe identity under these identity-only baseline predictors.
+* Python
+* pandas
+* NumPy
+* scikit-learn
+* Plotly
+* Jupyter
 
-I used a paired permutation test because both predictors (user-only and recipe-only) are evaluated on the same test interactions, so swapping per-row errors matches the null hypothesis of equal predictive power. MAE is a good metric here because it is directly interpretable in “rating points.” I used a significance level of alpha = 0.05 as a conventional threshold for deciding whether the observed difference is unlikely under the null.
+## Project Structure
 
----
+```text
+Recipe-Prediction-Modeling/
+├── analysis.ipynb
+├── README.md
+├── requirements.txt
+├── .gitignore
+├── src/
+│   ├── modeling.py
+│   └── statistical_tests.py
+├── assets/
+├── index.md
+└── _config.yml
+```
 
-## Framing a Prediction Problem
+## Code Structure
 
-**Prediction task:** Predict the numeric `rating` (1–5) that a user will give to a recipe.  
-**Type:** Regression  
-**Metric:** MAE (mean absolute error), because it is interpretable in “rating points” (e.g., MAE = 0.5 means the model is off by half a star on average).
+Reusable modeling and statistical-testing logic is separated from the notebook:
 
-**Time of prediction:** I assume the user is logged in (`user_id` known) and recipe attributes (e.g., cook time and steps) are known once the recipe is selected. I avoid leakage features such as average ratings computed from the full dataset.
+### `src/modeling.py`
 
----
+Contains the custom `RecipeFeatureEngineer` transformer used by the final scikit-learn pipeline.
 
-## Baseline Model
+### `src/statistical_tests.py`
 
-**Model:** Ridge regression in an sklearn Pipeline.
+Contains reusable functions for:
 
-**Features:**
-- `user_id` (nominal; OneHot encoded)
-- `minutes` (quantitative)
-- `n_steps` (quantitative)
+* missingness permutation testing
+* paired permutation testing of model errors
 
-**Baseline performance:** test MAE = 0.4447, meaning predictions are off by about 0.44 rating points on average.
+## Full Analysis
 
----
+The complete analysis is available in:
 
-## Final Model
+[`analysis.ipynb`](analysis.ipynb)
 
-### Planned hyperparameter tuning
-I tuned Ridge’s regularization strength `alpha`. Because `user_id` is one-hot encoded, the model has a high-dimensional feature space and can overfit; regularization controls how much coefficients are shrunk and can improve generalization.
+The notebook covers:
 
-### Feature engineering
-In addition to the baseline features, I added engineered recipe features:
-- `log_minutes = log(1 + minutes)` to reduce the impact of extreme cook-time outliers
-- `steps_per_minute = n_steps/(minutes+1)` and `minutes_per_step = minutes/(n_steps+1)` to capture process intensity/complexity
+1. Data preparation and exploratory analysis
+2. Missing-data analysis
+3. User vs. recipe predictive analysis
+4. Baseline regression modeling
+5. Feature engineering and hyperparameter tuning
+6. Cold-start analysis
+7. Conclusions
 
-I used GridSearchCV (5-fold CV) to select the best `alpha` based on MAE.
-GridSearchCV selected  `alpha` = 0.1 as the best value.
+## Reproducing the Project
 
-**Final performance:** test MAE = 0.4415, improving over the baseline MAE of 0.4447 on the same test set.
+Install the required Python packages:
 
+```bash
+pip install -r requirements.txt
+```
 
+Then launch the notebook:
 
----
+```bash
+jupyter notebook analysis.ipynb
+```
 
-## Fairness Analysis
+The Food.com datasets are not included in this repository.
 
-I tested whether the final model performs worse for users with little historical rating data (a cold-start concern).
+## Conclusions
 
-**Groups (defined using training data only):**
-- **Group X:** cold-start users (<= 5 ratings in the training set)
-- **Group Y:** active users (>= 50 ratings in the training set)
+This project produced three primary findings:
 
-**Metric:** MAE.
+1. **User identity is more predictive of ratings than recipe identity.**
+2. **A regularized regression model predicts ratings with an MAE of approximately 0.44.**
+3. **Prediction accuracy decreases substantially for users with limited historical data.**
 
-**Null hypothesis (H0):** MAE is the same across groups (any difference is due to chance).  
-**Alternative hypothesis (H1):** The model performs worse for Group X (MAE_X > MAE_Y).
-
-**Test statistic:** T = MAE_X − MAE_Y
-
-**Result:** MAE_X = 0.6349, MAE_Y = 0.3206, so T_obs = 0.3143. The permutation test gave p ≈ 0.0 (p < 1/B), so I reject H0. This provides strong evidence that the model performs substantially worse for cold-start users than for active users.
-
-The fairness analysis reveals a substantial cold-start performance gap: the model’s MAE is 0.6349 for users with ≤5 training ratings versus 0.3206 for users with ≥50, nearly doubling the typical error. A permutation test yields p<1/B, so the difference is unlikely under the null of equal performance. This is consistent with the model relying strongly on user-specific patterns from user_id; active users have enough historical data for the model to learn their rating tendencies, while cold-start users do not, leading to worse predictive performance for new or infrequent users. However, as the user gives more reviews, the model will become more and more accurate at predicting their future ratings. This makes sense given the conclusion made from our hypothesis testing - often, a recipe's rating is more telling of the user's general reviewing than the merits of the recipe itself. 
+Together, these results suggest that rating-prediction systems should account for persistent differences in user behavior while also addressing the challenges associated with new or infrequent users.
